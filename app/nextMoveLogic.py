@@ -1,5 +1,48 @@
 import random
 
+"""
+assessNextMoves(current_pos, gamedata)
+Safe_options = [ ]
+Food_options = [ ]
+Number_of_safe_options = len(safe_options)
+Deaths= int
+Foods = int
+Projected_positions = getNewPositions(current_pos)
+For pos in projected_poditions:
+  If isOutOfBoardSquare(pos) or isOtherSnakeSquare(pos) == True:
+  Deaths +=1
+Elif isFoodSquare == True:
+  Food +=1
+ Safe_options.append(pos)
+  Food_options.append(pos)
+Else:
+  Safe_options.append(pos)
+Return dictionarywithallthatinit
+
+Decision()
+Data = AssessNextMoves(currentpos, gamedata
+If data[deaths] == 3
+ We're fucked
+Elif data[deaths] == 2
+  Take only safe option
+Elif data[deaths] < 2:
+ best_option = PickBestOption(data[safeoptions])
+Direction= convert(best_option)
+Return direction
+
+
+PickBestOption(lst_of_options, gamedata):
+Recommendations = [ ]
+Options_data = [ ]
+For option in lst_of_options: Options_data.append( {'option':option, 'data':  assesnextMoves(option)})
+For I in  options_data:
+ If i[data][deaths] == 3:       Recommendations.append('option': i[option], 'rec score' = -5
+elif ...
+Best_option = ...
+Return best_option
+#use assesnextMoves on getNewPositions(I[data][projected_positions)
+"""
+
 class Status(object):
 
 	def getBodyPosition(gamedata):
@@ -11,6 +54,12 @@ class Status(object):
 		body = Status.getBodyPosition(gamedata)
 		head = body[0]
 		return head
+
+	def getTailPosition(gamedata):
+		body = Status.getBodyPosition(gamedata)
+		length = len(body)
+		tail = body[length-1]
+		return tail
 	
 	def getMyLength(gamedata):
 		body = Status.getBodyPosition(gamedata)
@@ -62,114 +111,77 @@ class Status(object):
 
 class Assess(object):
 
-	def getAllPossibleMoves(gamedata):
-		""" returns the coordinates of all four possible moves based
-		on the position of the head, regardless of whether they are in
-		the board space or not"""
+	def assessNextMoves(gamedata):
+		safe_options = []
+		food_options = []
+		number_of_safe_options = len(safe_options)
+		deaths = 0
+		foods = 0
+		projected_positions = Assess.getPossibleNewPositions(gamedata)
+		for position in projected_positions:
+			if SquareStatus.isOutOfBoardSquare(position[0], gamedata) or SquareStatus.isOtherSnakeSquare(position[0], gamedata) == True:
+				deaths +=1
+			elif SquareStatus.isFoodSquare(position[0], gamedata) == True:
+				food +=1
+				safe_options.append(position[0])
+				food_options.append(position[0])
+		else:
+			safe_options.append(position[0])
+		next_moves_data = {
+		'safe options': safe_options,
+		'food options': food_options,
+		'number of safe options': len(safe_options),
+		'deaths': deaths,
+		'foods': foods,
+		'projected positions': projected_positions
+		}
+		return next_moves_data
+
+	def getPossibleNewPositions(gamedata):
+		new_positions = []
+		current_position = Status.getBodyPosition(gamedata)
 		head = Status.getHeadPosition(gamedata)
-		up = {'x': head['x'], 'y':head['y']-1}
-		down = {'x': head['x'], 'y':head['y']+1}
-		left = {'x': head['x']-1, 'y':head['y']}
-		right = {'x': head['x']+1, 'y':head['y']}
-		options = [up, down, left, right]
-		return options
-
-	def removeOutOfGridMoves(moves, board_size):
-		safe_moves = []
-		for move in moves:
-			if board_size['width']-1 >= move['x'] >= 0 and board_size['height']-1 >= move['y'] >= 0:
-				safe_moves.append(move)
-		return safe_moves		
-
-	def removeOwnBodyMoves(moves, body_position):					
-		safe_moves = []
-		for move in moves:
-			if move not in body_position:
-				safe_moves.append(move)
-		return safe_moves
-
-	def removeOtherSnakeMoves(moves, snakes):			
-		safe_moves = []
-		for move in moves:
-			if move not in snakes:
-				safe_moves.append(move)
-		return safe_moves
-
-	def addBackInTails(snakes):
-		pass
+		tail = Status.getTailPosition(gamedata)
+		current_position.remove(tail)
+		possible_moves = [
+		{'x': head['x'], 'y':head['y']-1},
+		{'x': head['x'], 'y':head['y']+1},
+		{'x': head['x']-1, 'y':head['y']},
+		{'x': head['x']+1, 'y':head['y']}
+		]
+		for move in possible_moves:
+			if move not in current_position:
+				new_body_position = []
+				new_body_position.append(move)
+				for position in current_position:
+					new_body_position.append(position)
+				new_positions.append(new_body_position)
+		return new_positions
 
 
-	def getAllNonDeathMoves(body_position, gamedata):
+
+
+class SquareStatus(object):
+
+	def isOutOfBoardSquare(coord, gamedata):
 		board_size = Status.getBoardSize(gamedata)
+		if board_size['width']-1 >= coord['x'] >= 0 and board_size['height']-1 >= coord['y'] >= 0:				
+			return True
+		else: return False
+
+	def isOtherSnakeSquare(coord, gamedata):
 		other_snakes = Status.getOtherSnakesPositions(gamedata)
-		all_moves = Assess.getAllPossibleMoves(gamedata)
-		non_oob_moves = Assess.removeOutOfGridMoves(all_moves, board_size)
-		non_own_body_moves = Assess.removeOwnBodyMoves(non_oob_moves, body_position)
-		safe_moves = Assess.removeOtherSnakeMoves(non_own_body_moves, other_snakes)
-		return safe_moves
+		if coord in other_snakes:
+			return True
+		else: return False
 
-	def findNearestfood(gamedata):
-		food = Status.getFoodPositions(gamedata)
-		head = Status.getHeadPosition(gamedata)
-		food_vs_head = []
-		deltas = {}
-		for food in food:
-			food_vs_head.append({'horizontal':food['x']-head['x'], 'vertical':food['y']-head['y']})
-		for item in food_vs_head:			
-			delta = abs(item['horizontal']) + abs(item['vertical'])
-			deltas[food_vs_head.index(item)] = delta		
-		nearest = min(deltas.keys(), key=(lambda k: deltas[k]))
-		directions = food_vs_head[nearest]				
-		return directions
-
-	def getBodyCenterOfGravity(gamedata):
-		"""return the center of gravity for the snake so that it can move away from itself better"""
-		#average the xs and ys and then move away
-		body = Status.getBodyPosition(gamedata)
-		body_length = len(body)
-		sum_x = 0
-		sum_y = 0
-		avg_postion = {}
-		for coord in body:
-			sum_x += coord['x']
-			sum_y += coord['y']
-		avg_postion['x'] = sum_x/body_length
-		avg_postion['y'] = sum_y/body_length		
-		return avg_postion
+	def isfoodSquare(coord, gamedata):
+		food_squares = Status.getFoodPositions(gamedata)
+		if coord in food_squares:
+			return True
+		else: return False
 
 
-
-
-		
-	
-
-		
-
-
-	def killPossible(gamedata):
-		pass
-
-	def smallerSnakeNearby(gamedata):
-		pass
-
-	def biggerSnakeNearby(gamedata):
-		pass
-
-
-
-class Action(object):
-
-	def avoidDeath():
-		pass
-
-	def chaseFood():
-		pass
-
-	def fleeSnake():
-		pass
-
-	def chaseSnake():
-		pass
 
 class Decision(object):
 
@@ -186,91 +198,9 @@ class Decision(object):
 		else: return 'shit'
 
 	def chooseBestOption(gamedata):
-		#this needs major splitting out and cleaning up
-		body_position = Status.getBodyPosition(gamedata)
-		safe_coords = Assess.getAllNonDeathMoves(body_position, gamedata)
-		safe_moves = []
-		for coord in safe_coords:
-			direction = Decision.convertToDirection(gamedata, coord)
-			safe_moves.append(direction)
-		great_safe_moves = []
-		good_safe_moves = []
-		for safe_move in safe_moves:
-			if Simulate.getNumberOfNextMoves(safe_move, gamedata) == 3:
-				great_safe_moves.append(safe_move)
-			elif Simulate.getNumberOfNextMoves(safe_move, gamedata) == 2:
-				good_safe_moves.append(safe_move)
-		food_directions = Decision.foodDirections(gamedata)
-		away_from_body_directions = Decision.awayFromBodyDirections(gamedata)
-		health = Status.getHealth(gamedata)
-		turn = Status.getCurrentTurn(gamedata)		
-		go_for_food_options = []
-		avoid_self_directions = []
-		go_for_food = False
-		if turn < 20:
-			go_for_food = True
-		elif health < 20:
-			go_for_food = True		
-		for option in food_directions:
-			if option in great_safe_moves:
-				go_for_food_options.append(option)
-			elif option in good_safe_moves:
-				go_for_food_options.append(option)
-		for direction in away_from_body_directions:
-	 		if direction in great_safe_moves:
-	 			avoid_self_directions.append(direction)
-	 		elif direction in good_safe_moves:
-	 			avoid_self_directions.append(direction)
-		if go_for_food == True:
-			if go_for_food_options:
-				print('going for food!')
-				chosen_direction = random.choice(go_for_food_options)
-			else: 
-				if avoid_self_directions:
-					print('no safe food options, avoiding myself instead')
-					chosen_direction = random.choice(avoid_self_directions)
-				else:
-					print('no food, no away from self, picking a safe one')
-					chosen_direction = random.choice(safe_moves)
-		else:
-			if avoid_self_directions:
-				print('not hungry avoiding myself instead')
-				chosen_direction = random.choice(avoid_self_directions)
-			else:
-				chosen_direction = random.choice(safe_moves)
-				print('no away from self, picking a safe one')
-		print('safe_moves', safe_moves)
-		print('great safe moves', great_safe_moves)
-		print('good_safe_moves', good_safe_moves)
-		print('chosen_direction', chosen_direction)
-		return chosen_direction
-
-	def foodDirections(gamedata):
-		instructions = Assess.findNearestfood(gamedata)
-		directions = []
-		if instructions['horizontal'] > 0:
-			directions.append('right')
-		elif instructions['horizontal'] < 0:
-			directions.append('left')
-		if instructions['vertical'] > 0:
-			directions.append('down')
-		elif instructions['vertical'] < 0:
-			directions.append('up')
-		return directions
-
-	def awayFromBodyDirections(gamedata):
-		avg_position = Assess.getBodyCenterOfGravity(gamedata)
-		head_position = Status.getHeadPosition(gamedata)
-		best_directions = []
-		if head_position['x'] > avg_position['x']:
-			best_directions.append('right')
-		if head_position['x'] < avg_position['x']:
-			best_directions.append('left')
-		if head_position['y'] > avg_position['y']:
-			best_directions.append('down')
-		if head_position['y'] < avg_position['y']:
-			best_directions.append('up')
-		return best_directions
+		print(Assess.assessNextMoves(gamedata))
+		return 'left'
+		
 
 
 
