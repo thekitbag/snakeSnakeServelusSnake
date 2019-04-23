@@ -43,106 +43,106 @@ Return best_option
 #use assesnextMoves on getNewPositions(I[data][projected_positions)
 """
 
+
+
+
+
+
 class Status(object):
 
-	def getBodyPosition(gamedata):
-		me = gamedata['you']		
-		body = me['body']
+	def getMyBodyPosition(gamedata):
+		for snake in gamedata['board']['snakes']:
+			if snake['id'] == gamedata['you']['id']:
+				body = snake['body']
 		return body
 
-	def getHeadPosition(gamedata):
-		body = Status.getBodyPosition(gamedata)
-		head = body[0]
-		return head
 
-	def getTailPosition(gamedata):
-		body = Status.getBodyPosition(gamedata)
+	def getCurrentGoData(gamedata):
+		me = gamedata['you']
+		turn = gamedata['turn']
+		health = me['health']	
+		body = Status.getMyBodyPosition(gamedata)
+		head = body[0]
+		food = gamedata['board']['food']		
 		length = len(body)
 		tail = body[length-1]
-		return tail
-	
-	def getMyLength(gamedata):
-		body = Status.getBodyPosition(gamedata)
-		if body[0] == body[1] == body[2]:
-			return 1
-		elif body[1] == body[2]:
-			return 2
-		else: return len(body)
-
-	def getCurrentTurn(gamedata):
-		turn = gamedata['turn']
-		return turn
-
-	def getHealth(gamedata):
-		me = gamedata['you']
-		health = me['health']
-		return health
+		data = {
+		'body': body,
+		'head': head,
+		'tail': tail,
+		'length': length,
+		'turn': turn,
+		'food': food
+		}
+		return data
 
 	def getBoardSize(gamedata):
 		board_height = gamedata['board']['height']
 		board_width = gamedata['board']['width']
-		dimensions = {'height': board_height, 'width': board_width}
+		dimensions = {'height': board_height, 'width': board_width} 
 		return dimensions
-
-	def getFoodPositions(gamedata):
-		food = gamedata['board']['food']
-		return food
 
 	def getOtherSnakesPositions(gamedata):
 		snakes = gamedata['board']['snakes']
-		me = Status.getBodyPosition(gamedata)
+		me = Status.getMyBodyPosition(gamedata)	
 		snake_bodies = []		
 		filled_positions = []
 		for snake in snakes:
-			if snake['body'] != me:
-				snake_bodies.append(snake['body'])
+			if snake['body'] != me:	
+				for i in snake['body']:		
+					snake_bodies.append(i)
 				up = {'x': snake['body'][0]['x'], 'y':snake['body'][0]['y']-1}
 				down = {'x': snake['body'][0]['x'], 'y':snake['body'][0]['y']+1}
 				left = {'x': snake['body'][0]['x']-1, 'y':snake['body'][0]['y']}
 				right = {'x': snake['body'][0]['x']+1, 'y':snake['body'][0]['y']}
-				filled_positions.append(up)
-				filled_positions.append(down)
-				filled_positions.append(right)
-				filled_positions.append(left)
-		for body in snake_bodies:
-			for coord in body:
-				filled_positions.append(coord)
+				snake_bodies.append(up)
+				snake_bodies.append(down)
+				snake_bodies.append(right)
+				snake_bodies.append(left)
+		for coord in snake_bodies:			
+			filled_positions.append(coord)					
 		return filled_positions
+
 
 class Assess(object):
 
-	def assessNextMoves(gamedata):
+	
+
+	def assessNextMoves(position, gamedata):	
 		safe_options = []
 		food_options = []
-		number_of_safe_options = len(safe_options)
 		deaths = 0
 		foods = 0
-		projected_positions = Assess.getPossibleNewPositions(gamedata)
+		projected_positions = Assess.getPossibleNewPositions(position, gamedata)
+		head_positions = []		
 		for position in projected_positions:
-			if SquareStatus.isOutOfBoardSquare(position[0], gamedata) or SquareStatus.isOtherSnakeSquare(position[0], gamedata) == True:
+				head_positions.append(position[0])
+		for head_position in head_positions:
+			if SquareStatus.isOutOfBoardSquare(head_position, gamedata) == True or SquareStatus.isOtherSnakeSquare(head_position, gamedata) == True:				
 				deaths +=1
-			elif SquareStatus.isFoodSquare(position[0], gamedata) == True:
-				food +=1
-				safe_options.append(position[0])
-				food_options.append(position[0])
-		else:
-			safe_options.append(position[0])
+			if SquareStatus.isFoodSquare(head_position, gamedata) == True:
+				foods +=1
+				safe_options.append(head_position)
+				food_options.append(head_position)
+			if SquareStatus.isOutOfBoardSquare(head_position, gamedata) == False:
+				safe_options.append(head_position)
 		next_moves_data = {
+		'current_position': position,
+		'projected positions': projected_positions,
 		'safe options': safe_options,
 		'food options': food_options,
 		'number of safe options': len(safe_options),
 		'deaths': deaths,
-		'foods': foods,
-		'projected positions': projected_positions
+		'foods': foods
 		}
 		return next_moves_data
 
-	def getPossibleNewPositions(gamedata):
+	def getPossibleNewPositions(position, gamedata):
 		new_positions = []
-		current_position = Status.getBodyPosition(gamedata)
-		head = Status.getHeadPosition(gamedata)
-		tail = Status.getTailPosition(gamedata)
-		current_position.remove(tail)
+		head = position[0]
+		length = len(position)
+		tail = position[length-1]
+		position.remove(tail)
 		possible_moves = [
 		{'x': head['x'], 'y':head['y']-1},
 		{'x': head['x'], 'y':head['y']+1},
@@ -150,15 +150,13 @@ class Assess(object):
 		{'x': head['x']+1, 'y':head['y']}
 		]
 		for move in possible_moves:
-			if move not in current_position:
+			if move not in position:
 				new_body_position = []
 				new_body_position.append(move)
-				for position in current_position:
-					new_body_position.append(position)
+				for coord in position:
+					new_body_position.append(coord)
 				new_positions.append(new_body_position)
 		return new_positions
-
-
 
 
 class SquareStatus(object):
@@ -166,8 +164,8 @@ class SquareStatus(object):
 	def isOutOfBoardSquare(coord, gamedata):
 		board_size = Status.getBoardSize(gamedata)
 		if board_size['width']-1 >= coord['x'] >= 0 and board_size['height']-1 >= coord['y'] >= 0:				
-			return True
-		else: return False
+			return False
+		else: return True
 
 	def isOtherSnakeSquare(coord, gamedata):
 		other_snakes = Status.getOtherSnakesPositions(gamedata)
@@ -175,8 +173,8 @@ class SquareStatus(object):
 			return True
 		else: return False
 
-	def isfoodSquare(coord, gamedata):
-		food_squares = Status.getFoodPositions(gamedata)
+	def isFoodSquare(coord, gamedata):
+		food_squares = gamedata['board']['food']	
 		if coord in food_squares:
 			return True
 		else: return False
@@ -186,7 +184,7 @@ class SquareStatus(object):
 class Decision(object):
 
 	def convertToDirection(gamedata, move):
-		head_position = Status.getHeadPosition(gamedata)
+		head_position = Status.getCurrentGoData(gamedata)['head']
 		if head_position['x'] > move['x']:
 			return 'left'
 		elif head_position['x'] < move['x']:
@@ -198,12 +196,16 @@ class Decision(object):
 		else: return 'shit'
 
 	def chooseBestOption(gamedata):
-		print(Assess.assessNextMoves(gamedata))
-		return 'left'
+		current_position = Status.getMyBodyPosition(gamedata)
+		next_moves_data = Assess.assessNextMoves(current_position, gamedata)
+		safe_options = next_moves_data['safe options']
+		coord = random.choice(safe_options)
+		direction = Decision.convertToDirection(gamedata, coord)
+		return direction
 		
 
 
-
+"""
 class Simulate(object):
 	def getNumberOfNextMoves(move, gamedata):
 		body = Status.getBodyPosition(gamedata)
@@ -229,11 +231,14 @@ class Simulate(object):
 	def getNumberOfSecondRowMoves(first_row_moves, gamedata):
 		pass
 
+"""
 
 
 
+class Test(object):
 
-
+	def test_function(func, gamedata):
+		print(func(gamedata))
 
 
 

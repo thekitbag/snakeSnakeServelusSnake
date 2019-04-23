@@ -60,6 +60,7 @@ def move():
     TODO: Using the data from the endpoint request object, your
             snake AI must choose a direction to move in.
     """
+    #Test.test_function(Assess.assessNextMoves,data)
     move = Decision.chooseBestOption(data)
     return move_response(move)
 
@@ -83,6 +84,6 @@ if __name__ == '__main__':
     bottle.run(
         application,
         host=os.getenv('IP', '0.0.0.0'),
-        port=os.getenv('PORT', '8080'),
+        port=os.getenv('PORT', '8000'),
         debug=os.getenv('DEBUG', True)
     )
