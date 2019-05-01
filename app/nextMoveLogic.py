@@ -107,16 +107,17 @@ class Status(object):
 class Assess(object):
 
 	
-
-	def assessNextMoves(position, gamedata):	
+	def assessNextMoves(position, gamedata):		
+		given_position = position			
 		safe_options = []
 		food_options = []
 		deaths = 0
 		foods = 0
 		projected_positions = Assess.getPossibleNewPositions(position, gamedata)
+		print("given position2", given_position)		
 		head_positions = []		
-		for position in projected_positions:
-				head_positions.append(position[0])
+		for projected_position in projected_positions:
+				head_positions.append(projected_position[0])
 		for head_position in head_positions:
 			if SquareStatus.isOutOfBoardSquare(head_position, gamedata) == True or SquareStatus.isOtherSnakeSquare(head_position, gamedata) == True:				
 				deaths +=1
@@ -124,10 +125,10 @@ class Assess(object):
 				foods +=1
 				safe_options.append(head_position)
 				food_options.append(head_position)
-			if SquareStatus.isOutOfBoardSquare(head_position, gamedata) == False:
+			if SquareStatus.isOutOfBoardSquare(head_position, gamedata) == False and SquareStatus.isFoodSquare(head_position, gamedata) == False:
 				safe_options.append(head_position)
 		next_moves_data = {
-		'current_position': position,
+		'current_position': given_position,
 		'projected positions': projected_positions,
 		'safe options': safe_options,
 		'food options': food_options,
@@ -138,11 +139,11 @@ class Assess(object):
 		return next_moves_data
 
 	def getPossibleNewPositions(position, gamedata):
+		original_position = position
 		new_positions = []
 		head = position[0]
 		length = len(position)
 		tail = position[length-1]
-		position.remove(tail)
 		possible_moves = [
 		{'x': head['x'], 'y':head['y']-1},
 		{'x': head['x'], 'y':head['y']+1},
@@ -150,11 +151,12 @@ class Assess(object):
 		{'x': head['x']+1, 'y':head['y']}
 		]
 		for move in possible_moves:
-			if move not in position:
+			if move not in original_position:
 				new_body_position = []
-				new_body_position.append(move)
-				for coord in position:
+				new_body_position.append(move)				
+				for coord in original_position:
 					new_body_position.append(coord)
+				new_body_position.remove(new_body_position[length])
 				new_positions.append(new_body_position)
 		return new_positions
 
@@ -201,6 +203,7 @@ class Decision(object):
 		safe_options = next_moves_data['safe options']
 		coord = random.choice(safe_options)
 		direction = Decision.convertToDirection(gamedata, coord)
+		print(next_moves_data)
 		return direction
 		
 
