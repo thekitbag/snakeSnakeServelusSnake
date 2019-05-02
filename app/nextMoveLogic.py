@@ -114,22 +114,24 @@ class Assess(object):
 		deaths = 0
 		foods = 0
 		projected_positions = Assess.getPossibleNewPositions(position, gamedata)
-		print("given position2", given_position)		
 		head_positions = []		
 		for projected_position in projected_positions:
 				head_positions.append(projected_position[0])
 		for head_position in head_positions:
-			if SquareStatus.isOutOfBoardSquare(head_position, gamedata) == True or SquareStatus.isOtherSnakeSquare(head_position, gamedata) == True:				
+			if SquareStatus.isOutOfBoardSquare(head_position, gamedata) == True:				
 				deaths +=1
-			if SquareStatus.isFoodSquare(head_position, gamedata) == True:
+			elif SquareStatus.isOtherSnakeSquare(head_position, gamedata) == True:
+				deaths +=1
+			elif SquareStatus.isFoodSquare(head_position, gamedata) == True:
 				foods +=1
 				safe_options.append(head_position)
 				food_options.append(head_position)
-			if SquareStatus.isOutOfBoardSquare(head_position, gamedata) == False and SquareStatus.isFoodSquare(head_position, gamedata) == False:
-				safe_options.append(head_position)
+			else: safe_options.append(head_position)
 		next_moves_data = {
+		'turn': gamedata['turn'],
 		'current_position': given_position,
 		'projected positions': projected_positions,
+		'projected head positions': head_positions,
 		'safe options': safe_options,
 		'food options': food_options,
 		'number of safe options': len(safe_options),
@@ -159,6 +161,27 @@ class Assess(object):
 				new_body_position.remove(new_body_position[length])
 				new_positions.append(new_body_position)
 		return new_positions
+
+	def assessSecondTierMoves(projected_positions, gamedata):
+		first_position = projected_positions[0]
+		print(first_position)
+		first_move = first_position[0]
+		first_position_data = Assess.assessNextMoves(first_position, gamedata)
+		first_position_available_moves = first_position_data['number of safe options']
+		data = {"tier 1 move":first_move, 'score': first_position_available_moves}
+		return data
+
+	def bestOption(next_moves_data, second_tier_data):
+		print(" ")
+		print("next moves data")
+		print (" ")
+		print(next_moves_data)
+		print(" ")
+		print("second tier data")
+		print (" ")
+		print(second_tier_data)
+		print(" ")
+		return random.choice(next_moves_data['safe options'])
 
 
 class SquareStatus(object):
@@ -195,53 +218,32 @@ class Decision(object):
 			return 'up'
 		elif head_position['y'] < move['y']:
 			return 'down'
-		else: return 'shit'
+		else: return 'error'
 
 	def chooseBestOption(gamedata):
 		current_position = Status.getMyBodyPosition(gamedata)
 		next_moves_data = Assess.assessNextMoves(current_position, gamedata)
+		projected_positions = next_moves_data['projected positions']		
 		safe_options = next_moves_data['safe options']
-		coord = random.choice(safe_options)
-		direction = Decision.convertToDirection(gamedata, coord)
-		print(next_moves_data)
+		num_of_safe_options = next_moves_data['number of safe options']
+		if num_of_safe_options == 0:
+			direction = 'up'
+		elif num_of_safe_options == 1:
+			direction = Decision.convertToDirection(gamedata, safe_options[0])
+		else:
+			second_tier_data = Assess.assessSecondTierMoves(projected_positions, gamedata)
+			best_option = Assess.bestOption(next_moves_data, second_tier_data)
+			direction = Decision.convertToDirection(gamedata, best_option)			
 		return direction
 		
 
-
-"""
 class Simulate(object):
-	def getNumberOfNextMoves(move, gamedata):
-		body = Status.getBodyPosition(gamedata)
-		length = Status.getMyLength(gamedata)
-		new_pos = []
-		de_tailed_body = body[0:length-1]
-		if move == 'up':
-			new_pos.append({'x':body[0]['x'],'y':body[0]['y']-1})
-			new_pos.append(body)
-		elif move == 'down':
-			new_pos.append({'x':body[0]['x'],'y':body[0]['y']+1})
-			new_pos.append(body)
-		elif move == 'left':
-			new_pos.append({'x':body[0]['x']-1,'y':body[0]['y']})
-			new_pos.append(body)
-		elif move =='right':
-			new_pos.append({'x':body[0]['x']+1,'y':body[0]['y']})
-			new_pos.append(body)
-		else: return 'no move given'
-		number_of_available_moves = Assess.getAllNonDeathMoves(new_pos, gamedata)
-		return len(number_of_available_moves)
+	def simSecondTiermoves(gamedata, next_moves):
+		second_tier_moves = {}		
+		for move in next_moves:
+			data = {}
+			data['deaths'] = move['deaths']
 
-	def getNumberOfSecondRowMoves(first_row_moves, gamedata):
-		pass
-
-"""
-
-
-
-class Test(object):
-
-	def test_function(func, gamedata):
-		print(func(gamedata))
 
 
 
