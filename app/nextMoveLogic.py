@@ -1,53 +1,5 @@
 import random
 
-"""
-assessNextMoves(current_pos, gamedata)
-Safe_options = [ ]
-Food_options = [ ]
-Number_of_safe_options = len(safe_options)
-Deaths= int
-Foods = int
-Projected_positions = getNewPositions(current_pos)
-For pos in projected_poditions:
-  If isOutOfBoardSquare(pos) or isOtherSnakeSquare(pos) == True:
-  Deaths +=1
-Elif isFoodSquare == True:
-  Food +=1
- Safe_options.append(pos)
-  Food_options.append(pos)
-Else:
-  Safe_options.append(pos)
-Return dictionarywithallthatinit
-
-Decision()
-Data = AssessNextMoves(currentpos, gamedata
-If data[deaths] == 3
- We're fucked
-Elif data[deaths] == 2
-  Take only safe option
-Elif data[deaths] < 2:
- best_option = PickBestOption(data[safeoptions])
-Direction= convert(best_option)
-Return direction
-
-
-PickBestOption(lst_of_options, gamedata):
-Recommendations = [ ]
-Options_data = [ ]
-For option in lst_of_options: Options_data.append( {'option':option, 'data':  assesnextMoves(option)})
-For I in  options_data:
- If i[data][deaths] == 3:       Recommendations.append('option': i[option], 'rec score' = -5
-elif ...
-Best_option = ...
-Return best_option
-#use assesnextMoves on getNewPositions(I[data][projected_positions)
-"""
-
-
-
-
-
-
 class Status(object):
 
 	def getMyBodyPosition(gamedata):
@@ -163,16 +115,26 @@ class Assess(object):
 		return new_positions
 
 	def assessSecondTierMoves(projected_positions, gamedata):
-		first_position = projected_positions[0]
-		print(first_position)
-		first_move = first_position[0]
-		first_position_data = Assess.assessNextMoves(first_position, gamedata)
-		first_position_available_moves = first_position_data['number of safe options']
-		data = {"tier 1 move":first_move, 'score': first_position_available_moves}
-		return data
+		tier_2_data = []
+		for position in projected_positions:
+			position_data = Assess.assessNextMoves(position, gamedata)
+			available_moves = position_data['number of safe options']
+			data = {
+			"tier 1 move":position[0],
+			"score": available_moves
+			}
+			tier_2_data.append(data)
+		return tier_2_data
 
 	def bestOption(next_moves_data, second_tier_data):
-		print(" ")
+		#do some scoring and pick an option
+		options = second_tier_data
+		seq = [x['score'] for x in options]
+		best_score = max(seq)
+		for option in options:  
+			if option['score'] == best_score:
+				return option['tier 1 move']
+		"""print(" ")
 		print("next moves data")
 		print (" ")
 		print(next_moves_data)
@@ -181,7 +143,7 @@ class Assess(object):
 		print (" ")
 		print(second_tier_data)
 		print(" ")
-		return random.choice(next_moves_data['safe options'])
+		return random.choice(next_moves_data['safe options'])"""
 
 
 class SquareStatus(object):
