@@ -24,7 +24,8 @@ class Status(object):
 		'tail': tail,
 		'length': length,
 		'turn': turn,
-		'food': food
+		'food': food,
+		'health': health
 		}
 		return data
 
@@ -126,24 +127,44 @@ class Assess(object):
 			tier_2_data.append(data)
 		return tier_2_data
 
-	def bestOption(next_moves_data, second_tier_data):
+	def bestOptions(next_moves_data, second_tier_data):
 		#do some scoring and pick an option
 		options = second_tier_data
+		best_options = []
 		seq = [x['score'] for x in options]
 		best_score = max(seq)
 		for option in options:  
 			if option['score'] == best_score:
-				return option['tier 1 move']
-		"""print(" ")
-		print("next moves data")
-		print (" ")
-		print(next_moves_data)
-		print(" ")
-		print("second tier data")
-		print (" ")
-		print(second_tier_data)
-		print(" ")
-		return random.choice(next_moves_data['safe options'])"""
+				best_options.append(option['tier 1 move'])
+		return best_options
+	
+	def nearestOptionToFood(options, gamedata):
+		food = Status.getCurrentGoData(gamedata)['food']
+		nearest_food_data = []
+		for position in options:
+			food_vs_head = []
+			deltas = {}
+			for foodbite in food:
+				food_vs_head.append({'horizontal':foodbite['x']-position['x'], 'vertical':foodbite['y']-position['y']})
+			for item in food_vs_head:			
+				delta = abs(item['horizontal']) + abs(item['vertical'])
+				deltas[food_vs_head.index(item)] = delta						
+			nearest = min(deltas.keys(), key=(lambda k: deltas[k]))
+			directions = food_vs_head[nearest]			
+			nearest_food_data.append({
+				'position':position,
+				'distance from food': deltas[nearest],
+				'directions to food': food_vs_head[nearest],
+				'food location': food[nearest]
+
+				})		
+		seq = [x['distance from food'] for x in nearest_food_data]
+		closest = min(seq)
+		for datapoint in nearest_food_data:
+			if datapoint['distance from food'] == closest:
+				return datapoint['food location']
+		
+
 
 
 class SquareStatus(object):
@@ -188,14 +209,30 @@ class Decision(object):
 		projected_positions = next_moves_data['projected positions']		
 		safe_options = next_moves_data['safe options']
 		num_of_safe_options = next_moves_data['number of safe options']
+		food_options = next_moves_data['food options']
 		if num_of_safe_options == 0:
 			direction = 'up'
 		elif num_of_safe_options == 1:
 			direction = Decision.convertToDirection(gamedata, safe_options[0])
 		else:
-			second_tier_data = Assess.assessSecondTierMoves(projected_positions, gamedata)
-			best_option = Assess.bestOption(next_moves_data, second_tier_data)
-			direction = Decision.convertToDirection(gamedata, best_option)			
+			health = Status.getCurrentGoData(gamedata)['health']
+			if health < 50:
+				if food_options:
+					direction = Decision.convertToDirection(gamedata, food_options[0])
+				else:
+					second_tier_data = Assess.assessSecondTierMoves(projected_positions, gamedata)
+					best_options = Assess.bestOptions(next_moves_data, second_tier_data)
+					if len(best_options) == 1:
+						direction = Decision.convertToDirection(gamedata, best_options[0])
+					else:
+						direction = Decision.convertToDirection(gamedata, best_options[random.randint(0,len(best_options)-1)])
+			else:
+				second_tier_data = Assess.assessSecondTierMoves(projected_positions, gamedata)
+				best_options = Assess.bestOptions(next_moves_data, second_tier_data)
+				if len(best_options) == 1:
+					direction = Decision.convertToDirection(gamedata, best_options[0])
+				else:
+					direction = Decision.convertToDirection(gamedata, best_options[random.randint(0,len(best_options)-1)])
 		return direction
 		
 
