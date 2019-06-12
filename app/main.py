@@ -267,26 +267,31 @@ class Decision(object):
         else: return 'error'
 
     def chooseBestOption(gamedata):
-        current_position = Status.getMyBodyPosition(gamedata)
-        next_moves_data = Assess.assessNextMoves(current_position, gamedata)
-        projected_positions = next_moves_data['projected positions']        
-        safe_options = next_moves_data['safe options']
-        num_of_safe_options = next_moves_data['number of safe options']
-        food_options = next_moves_data['food options']
-        if num_of_safe_options == 0:
-            direction = 'left'
-        elif num_of_safe_options == 1:
-            direction = Decision.convertToDirection(gamedata, safe_options[0])
+        if gamedata['turn'] == 1:
+            direction = 'right'
+        elif gamedata['turn'] == 2:
+            direction = 'down'
         else:
-            health = Status.getCurrentGoData(gamedata)['health']
-            if health < 30:
-                if food_options:
-                    direction = Decision.convertToDirection(gamedata, food_options[0])
+            current_position = Status.getMyBodyPosition(gamedata)
+            next_moves_data = Assess.assessNextMoves(current_position, gamedata)
+            projected_positions = next_moves_data['projected positions']        
+            safe_options = next_moves_data['safe options']
+            num_of_safe_options = next_moves_data['number of safe options']
+            food_options = next_moves_data['food options']
+            if num_of_safe_options == 0:
+                direction = 'left'
+            elif num_of_safe_options == 1:
+                direction = Decision.convertToDirection(gamedata, safe_options[0])
+            else:
+                health = Status.getCurrentGoData(gamedata)['health']
+                if health < 30:
+                    if food_options:
+                        direction = Decision.convertToDirection(gamedata, food_options[0])
+                    else:
+                        direction = Decision.convertToDirection(gamedata, random.choice(safe_options))
                 else:
                     direction = Decision.convertToDirection(gamedata, random.choice(safe_options))
-            else:
-                direction = Decision.convertToDirection(gamedata, random.choice(safe_options))
-        return direction
+            return direction
         
 
 
