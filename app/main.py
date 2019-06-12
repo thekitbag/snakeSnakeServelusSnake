@@ -2,7 +2,7 @@ import json
 import os
 import random
 import bottle
-from .nextMoveLogic import Decision
+from .newLogic import Decision
 
 from .api import ping_response, start_response, move_response, end_response
 
