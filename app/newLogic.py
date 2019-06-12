@@ -185,7 +185,7 @@ class Decision(object):
 		num_of_safe_options = next_moves_data['number of safe options']
 		food_options = next_moves_data['food options']
 		if num_of_safe_options == 0:
-			direction = 'up'
+			direction = 'left'
 		elif num_of_safe_options == 1:
 			direction = Decision.convertToDirection(gamedata, safe_options[0])
 		else:
