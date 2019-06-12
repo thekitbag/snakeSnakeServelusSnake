@@ -291,7 +291,7 @@ class Decision(object):
                         direction = Decision.convertToDirection(gamedata, random.choice(safe_options))
                 else:
                     direction = Decision.convertToDirection(gamedata, random.choice(safe_options))
-            return direction
+        return direction
         
 
 
